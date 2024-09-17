@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "target": "es6",  // Or "esnext" for more modern features
+    "module": "commonjs",
+    "checkJs": true  // Enable type-checking for JavaScript
+  },
+  "exclude": ["node_modules"]  // Exclude your node modules folder
+}
