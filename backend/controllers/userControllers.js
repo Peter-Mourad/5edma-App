@@ -3,7 +3,6 @@ const Joi = require('joi');
 const generateQRCode = require('../utils/qrCodeGenerator');
 const bcrypt = require('bcrypt');
 const jwt = require('../utils/jwt');
-const { error } = require('console');
 
 
 const signUp = async (req, res) => {
@@ -117,4 +116,65 @@ const login = async (req, res) => {
     return res.send(tokens);
 };
 
-module.exports = {signUp, login};
+const logout = async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return res.status(400).json({ message: 'No token provided' });
+    }
+
+    try {
+        const decoded = jwt.verifyAccessToken(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await User.findByPk(decoded.id);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        user.refreshToken = null;
+        await user.save();
+
+        res.send({ message: 'Logged out successfully' });
+    } catch (error) {
+        res.status(400).send({ error: error });
+    }
+};
+
+const getUserProfile = async (req, res) => {
+    console.log(req.user);
+    const user = await User.findByPk(req.user.id);
+
+    return res.json({
+        "userId": user.userId,
+        "firstName": user.firstName,
+        "lastName": user.lastName,
+        "email": user.email,
+        "role": user.role,
+        "birthdate": user.birthdate,
+        "qrCode": user.qrCode,
+    });
+};
+
+const deleteUserAccount = async (req, res) => {
+    try {
+        const result = await User.destroy({ where: { userID: req.user.id, } });
+
+        if (!result) {
+            res.status(404).json({ message: `User Not found.` });
+        }
+        res.json({ message: `User was deleted successfully.` });
+    } catch (error) {
+        res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    }
+};
+
+const updateUserData = async (req, res) => {
+    const user = await User.findByPk(req.user.id);
+    try {
+        await user.update(req.body.user);
+        return res.send({ user });
+    } catch (error) {
+        return res.status(403).send({ error: error });
+    }
+};
+
+module.exports = {signUp, login, logout, getUserProfile, deleteUserAccount, updateUserData};
