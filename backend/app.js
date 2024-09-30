@@ -1,17 +1,18 @@
 require('dotenv').config();
 const express = require('express');
-const signUp = require('./routes/signUp');
-const login = require('./routes/login');
-const logout = require('./routes/logout');
-const profile = require('./routes/profile');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 
 app.use(express.json());
-app.use(signUp);
-app.use(login);
-app.use(logout);
-app.use(profile);
+
+fs.readdirSync(path.join(__dirname, 'routes')).forEach((file) => {
+    if (file.endsWith('.js')) {
+        const route = require(`./routes/${file}`);
+        app.use(route);
+    }
+});
 
 const port = process.env.PORT;
 app.listen(port, () => {
