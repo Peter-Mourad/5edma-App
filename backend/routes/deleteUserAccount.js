@@ -1,4 +1,4 @@
-const { deleteUserAccount } = require('../controllers/userControllers');
+const { deleteUserAccount } = require('../controllers/userProfileController');
 const express = require('express');
 const verifyToken = require('../middlewares/auth');
 

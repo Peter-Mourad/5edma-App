@@ -3,7 +3,7 @@ require('dotenv').config();
 
 exports.generateTokens = (user) => {
     const payload = {
-        id: user.userID,
+        id: user.userId,
         role: user.role
     };
 

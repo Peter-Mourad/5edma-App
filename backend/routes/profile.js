@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getUserProfile, deleteUserAccount, updateUserData } = require('../controllers/userControllers');
+const { getUserProfile, deleteUserAccount, updateUserData } = require('../controllers/userProfileController');
 const verifyToken = require('../middlewares/auth');
 
 router.get('/getUserProfile', verifyToken, getUserProfile);
