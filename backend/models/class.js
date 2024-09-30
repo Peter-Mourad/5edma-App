@@ -7,20 +7,21 @@ const Class = sequelize.define('Class', {
         type: DataTypes.UUID,
         primaryKey: true, defaultValue: DataTypes.UUIDV4
     },
-    name: {
+    className: {
         type: DataTypes.STRING,
         allowNull: false, unique: true
     },
-    creatorID: {
+    creatorId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
             model: User,
-            key: 'userID',
+            key: 'userId',
         }
     },
     }, {
-        tableName: 'Classes'
+        tableName: 'Classes',
+        timestamps: false
     }
 );
 

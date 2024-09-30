@@ -3,7 +3,7 @@ const sequelize = require('./connection');
 const bcrypt = require('bcrypt');
 
 const User = sequelize.define('User', {
-        userID: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
+        userId: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
         firstName: { type: DataTypes.STRING, allowNull: false },
         lastName: { type: DataTypes.STRING, allowNull: false },
         email: { type: DataTypes.STRING, allowNull: false, unique: true },
@@ -15,11 +15,7 @@ const User = sequelize.define('User', {
         refreshToken: { type: DataTypes.TEXT, allowNull: true }
     }, {
         tableName: 'Users',
-        hooks: {
-            beforeCreate: async (user) => {
-                user.password = await bcrypt.hash(user.password, bcrypt.genSaltSync(10));
-            },
-        },
+        timestamps: false
     }
 );
 
