@@ -3,10 +3,12 @@ const Joi = require('joi');
 const generateQRCode = require('../utils/qrCodeGenerator');
 const bcrypt = require('bcrypt');
 const jwt = require('../utils/jwt');
+const { v4: uuidv4 } = require('uuid');
 
 const signUp = async (req, res) => {
     var { email, password, firstName, lastName, birthdate, role } = req.body;
     const userData = {
+        userId: uuidv4(),
         email: email,
         password: password,
         firstName: firstName,
@@ -26,7 +28,7 @@ const signUp = async (req, res) => {
             return res.status(422).send({ error: 'Email is arleady registered to another account!' });
         }
         
-        const qrCode = await generateQRCode(email);
+        const qrCode = await generateQRCode(userData.userId);
         const tokens = jwt.generateTokens(userData);
 
         userData.qrCode = qrCode;
@@ -42,6 +44,8 @@ const signUp = async (req, res) => {
 
 const validateSignUp = (userData) => {
     const signUpSchema = Joi.object({
+        userId: Joi.string().
+            required(),
         email: Joi.string()
             .pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'email')
             .required()
