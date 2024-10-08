@@ -11,11 +11,18 @@ const User = sequelize.define('User', {
         role: { type: DataTypes.ENUM('مخدوم', 'خادم', 'أمين خدمه'), allowNull: false },
         emailConfirmed: { type: DataTypes.BOOLEAN, defaultValue: false },
         birthdate: { type: DataTypes.DATEONLY, allowNull: false },
+        profilePicture: {type: DataTypes.STRING, allowNull: true},
         qrCode: {type: DataTypes.TEXT, allowNull: false},
         refreshToken: { type: DataTypes.TEXT, allowNull: true }
     }, {
         tableName: 'Users',
-        timestamps: false
+        timestamps: false,
+        hooks: {
+            beforeCreate: async (user) => {
+                const salt = await bcrypt.genSalt(10);
+                user.password = await bcrypt.hash(user.password, salt);
+            }
+        },
     }
 );
 
