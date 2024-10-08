@@ -17,22 +17,27 @@ const signUp = async (req, res) => {
 
     const validationError = validateSignUp(userData);
     if (validationError) {
-        return res.status(403).send({ error: validationError });
+        return res.status(422).json({ error: validationError});
     }
 
-    const isEmailTaken = await User.findOne({ where: { email: email } });
-    if (isEmailTaken) {
-        return res.status(403).send({ error: 'Email is arleady registered to another account!' });
+    try { 
+        const isEmailTaken = await User.findOne({ where: { email: email } });
+        if (isEmailTaken) {
+            return res.status(422).send({ error: 'Email is arleady registered to another account!' });
+        }
+        
+        const qrCode = await generateQRCode(email);
+        const tokens = jwt.generateTokens(userData);
+
+        userData.qrCode = qrCode;
+        userData.refreshToken = tokens.refresh_token;
+        
+        const user = await User.create(userData);
+        return res.status(201).send(tokens);
+    } catch (error) {
+        return res.status(400).json({ error: error.message });
     }
     
-    const qrCode = await generateQRCode(email);
-    const tokens = jwt.generateTokens(userData);
-
-    userData.qrCode = qrCode;
-    userData.refreshToken = tokens.refresh_token;
-    
-    const user = await User.create(userData);
-    return res.status(201).send(tokens);
 };
 
 const validateSignUp = (userData) => {
@@ -48,7 +53,7 @@ const validateSignUp = (userData) => {
             .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,30}$/, 'password')
             .required()
             .messages({
-                'string.pattern.name': 'Password must be at least 8 characters, include one uppercase, one lowercase, one number, and one special character',
+                'string.pattern.name': 'Password must be at least 8 characters, include atleast one uppercase, one lowercase, one digit, and one special character',
                 'any.required': 'Password is required'
             }),
         firstName: Joi.string()
@@ -101,30 +106,25 @@ const validateSignUp = (userData) => {
 
 const login = async (req, res) => {
     const { email, password } = req.body;
-    const user = await User.findOne({ where: { email: email } });
-    if (!user) {
-        return res.status(401).send({ error: 'User not found!' });
-    }
-    
-    const result = await bcrypt.compare(password, user.password);
-    if (!result) {
-        return res.status(401).send({ error: "Password isn't correct!" });
+
+    try {
+        const user = await User.findOne({ where: { email: email } });
+        
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(401).send({ error: "Invalid Email or Password!" });
+        }
+
+        const { access_token } = jwt.generateTokens(user);
+        return res.json({access_token});
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
     }
 
-    const tokens = jwt.generateTokens(user);
-    return res.send(tokens);
 };
 
 const logout = async (req, res) => {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-        return res.status(400).json({ message: 'No token provided' });
-    }
-
     try {
-        const decoded = jwt.verifyAccessToken(token, process.env.ACCESS_TOKEN_SECRET);
-
-        const user = await User.findByPk(decoded.id);
+        const user = await User.findByPk(req.user.id);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -132,10 +132,23 @@ const logout = async (req, res) => {
         user.refreshToken = null;
         await user.save();
 
-        res.send({ message: 'Logged out successfully' });
+        res.status(204).send();
     } catch (error) {
-        res.status(400).send({ error: error });
+        res.status(500).json({ error: error.message });
     }
 };
 
-module.exports = {signUp, login, logout};
+const deleteUserAccount = async (req, res) => {
+    try {
+        const result = await User.destroy({ where: { userId: req.user.id, } });
+
+        if (!result) {
+            return res.status(404).json({ message: `User Not found.` });
+        }
+        return res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    }
+};
+
+module.exports = {signUp, login, logout, deleteUserAccount};
