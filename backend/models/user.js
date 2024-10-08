@@ -3,7 +3,7 @@ const sequelize = require('./connection');
 const bcrypt = require('bcrypt');
 
 const User = sequelize.define('User', {
-        userId: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
+        userId: { type: DataTypes.UUID, primaryKey: true },
         firstName: { type: DataTypes.STRING, allowNull: false },
         lastName: { type: DataTypes.STRING, allowNull: false },
         email: { type: DataTypes.STRING, allowNull: false, unique: true },
