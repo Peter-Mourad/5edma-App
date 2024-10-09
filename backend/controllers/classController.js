@@ -4,31 +4,37 @@ const sequelize = require('../models/connection');
 const Joi = require('joi');
 
 const createClass = async (req, res) => {
-    const classSchema = Joi.object({
-        className: Joi.string()
-            .pattern(/^[A-Za-zأ-ي\s]+$/)
-            .min(3)
-            .max(50)
-            .required()
-            .messages({
-                'string.pattern.name': 'Class name must contain only English or Arabic alphabetic characters',
-                'string.min': 'Class name must be at least 3 characters long',
-                'string.max': 'Class name cannot exceed 50 characters',
-                'any.required': 'Class name is required'
-            }),
-    });
-
-    const classData = {
-        className: req.body.className,
-        creatorId: req.user.id
-    };
-
-    const { error, result } = classSchema.validate({ className: classData.className });
-    if (error) {
-        return res.status(400).send({ error: error.details });
-    }
-
     try {
+        // check if the creator role is "أمين خدمه"
+        const user = await User.findByPk(req.user.id);
+        if (user.role !== 'أمين خدمه') {
+            return res.status(401).json({ error: "User isn't Authorized to create classes!" });
+        }
+
+        const classSchema = Joi.object({
+            className: Joi.string()
+                .pattern(/^[A-Za-zأ-ي\s]+$/)
+                .min(3)
+                .max(50)
+                .required()
+                .messages({
+                    'string.pattern.name': 'Class name must contain only English or Arabic alphabetic characters',
+                    'string.min': 'Class name must be at least 3 characters long',
+                    'string.max': 'Class name cannot exceed 50 characters',
+                    'any.required': 'Class name is required'
+                }),
+        });
+
+        const classData = {
+            className: req.body.className,
+            creatorId: req.user.id
+        };
+
+        const { error, result } = classSchema.validate({ className: classData.className });
+        if (error) {
+            return res.status(400).send({ error: error.details });
+        }
+
         const newClass = await Class.create(classData);
 
         // then add the creator to the class with role 'creator'
