@@ -16,4 +16,7 @@ Class.belongsTo(User, { foreignKey: 'creatorId' });
 User.belongsToMany(Class, { through: ClassUser, foreignKey: 'userId', otherKey: 'classId' });
 Class.belongsToMany(User, { through: ClassUser, foreignKey: 'classId', otherKey: 'userId' });
 
+ClassUser.belongsTo(User, { foreignKey: 'userId' });
+ClassUser.belongsTo(Class, { foreignKey: 'classId' });
+
 module.exports = db;
